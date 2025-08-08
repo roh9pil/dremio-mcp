@@ -20,11 +20,26 @@ from typing import AnyStr, Callable, Optional, Dict, TypeAlias, Union, TextIO
 from dremioai.log import logger
 from json import loads
 from pydantic import BaseModel, ValidationError
+import requests
 
 from dremioai.config import settings
 from dremioai.api.oauth2 import get_oauth2_tokens
 
 DeserializationStrategy: TypeAlias = Union[Callable, BaseModel]
+
+
+def _get_token_from_username_password(uri, username, password):
+    """Gets a token from username and password."""
+    url = f"{uri}/oauth/token"
+    data = {
+        "grant_type": "password",
+        "username": username,
+        "password": password,
+    }
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    response = requests.post(url, data=data, headers=headers)
+    response.raise_for_status()
+    return response.json()["token"]
 
 
 class AsyncHttpClient:
@@ -137,6 +152,11 @@ class DremioAsyncHttpClient(AsyncHttpClient):
 
         uri = dremio.uri
         pat = dremio.pat
+
+        if dremio.username and dremio.password:
+            pat = _get_token_from_username_password(uri, dremio.username, dremio.password)
+        elif not pat:
+            raise ValueError("Either a PAT or a username/password must be supplied for Dremio authentication.")
 
         if uri is None or pat is None:
             raise RuntimeError(f"uri={uri} pat={pat} are required")
