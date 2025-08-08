@@ -1,2 +1,9 @@
 *.pyc
 .venv
+.vscode
+__pycache__
+*.egg-info
+*.pyo
+*.pyd
+*.db
+*.sqlite3

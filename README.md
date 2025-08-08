@@ -23,32 +23,6 @@ Table of Contents
 
 This repo provides an **M**odel **C**ontext **P**rotocol ([MCP](https://docs.anthropic.com/en/docs/welcome)) server for easing LLM integration with Dremio. If you are new to MCP and MCP Servers take our Dremio MCP Server course on Dremio University ([DremioU](https://university.dremio.com/course/dremio-mcp)). If you are familiar with these concepts already please proceed below.
 
-```mermaid
-%%{init:
-{
-    "themeVariables": {
-        "fontFamily": "Inter"
-    }
-}
-}%%
-
-architecture-beta
-    group ws(cloud)[Workstation]
-
-    service cf(database)[Config] in ws
-    service mcp(server)[Dremio MCP Server] in ws
-    service claude(cloud)[Claude Desktop] in ws
-
-    mcp:B <-- T:cf
-    claude:R <--> L:mcp
-
-
-    group dremio(cloud)[Dremio]
-    service de(server)[Dremio Engine] in dremio
-
-    mcp:R <--> L:de
-```
-
 # Installation
 
 The MCP server runs locally on the machine that runs the LLM frontend (eg Claude). The installation steps are simple
@@ -116,10 +90,19 @@ Note: For security purposes, if you don't want the PAT to leak into your shell h
 
 Example: 
 
+Option 1: using PAT
 ```shell
 $ uv run dremio-mcp-server config create dremioai \
     --uri <dremio uri> \
     --pat @/path/to/tokenfile \
+```
+
+Option2: username/password
+```shell
+$ uv run dremio-mcp-server config create dremioai \
+    --uri <dremio uri> \
+    --username <your_username> \
+    --passowrd <your_passowrd> \
 ```
 
 2. Download and install Claude Desktop ([Claude](https://claude.ai/download))

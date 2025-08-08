@@ -120,6 +120,8 @@ class Dremio(BaseModel):
         Union[str, HttpUrl, DremioCloudUri], AfterValidator(_resolve_dremio_uri)
     ]
     raw_pat: Optional[str] = Field(default=None, alias="pat")
+    username: Optional[str] = None
+    password: Optional[str] = None
     project_id: Optional[str] = None
     enable_search: Optional[bool] = Field(
         default=False,

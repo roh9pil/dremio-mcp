@@ -18,8 +18,9 @@ from aiohttp import ClientSession, ClientResponse, ClientResponseError
 from pathlib import Path
 from typing import AnyStr, Callable, Optional, Dict, TypeAlias, Union, TextIO
 from dremioai.log import logger
-from json import loads
+from json import loads, dumps
 from pydantic import BaseModel, ValidationError
+import requests
 
 from dremioai.config import settings
 from dremioai.api.oauth2 import get_oauth2_tokens
@@ -27,12 +28,24 @@ from dremioai.api.oauth2 import get_oauth2_tokens
 DeserializationStrategy: TypeAlias = Union[Callable, BaseModel]
 
 
+def _get_token_from_username_password(uri, username, password):
+    """Gets a token from username and password."""
+    url = f"{uri}/apiv2/login"
+    data = {
+        "userName": username,
+        "password": password,
+    }
+    response = requests.post(url, json=data, verify=False)
+    response.raise_for_status()
+    return response.json().get("token", None)
+
 class AsyncHttpClient:
     def __init__(self, uri: AnyStr, token: AnyStr):
         self.uri = uri
         self.token = token
         self.headers = {
             "Authorization": f"Bearer {token}",
+            #"Authorization": f"_dremio{token}",
             "content-type": "application/json",
         }
         self.update_headers()
@@ -137,6 +150,11 @@ class DremioAsyncHttpClient(AsyncHttpClient):
 
         uri = dremio.uri
         pat = dremio.pat
+
+        if dremio.username and dremio.password:
+            pat = _get_token_from_username_password(uri, dremio.username, dremio.password)
+        elif not pat:
+            raise ValueError("Either a PAT or a username/password must be supplied for Dremio authentication.")
 
         if uri is None or pat is None:
             raise RuntimeError(f"uri={uri} pat={pat} are required")
